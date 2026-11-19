@@ -1,309 +1,124 @@
-/* ===== Konstanta & util ===== */
-const KEY = 'fokusin_v1';
-const LABEL = { fokus: 'Fokus', istirahat: 'Istirahat', panjang: 'Istirahat Panjang' };
-const PLANTS = ['🌱', '🌷', '🌻', '🌵', '🌼', '🪴', '🌿', '🍀', '🌸', '🍄'];
-const NOTE = {
-  tinggi: 'bg-[#FECACA] text-[#450a0a]',
-  sedang: 'bg-[#FEF08A] text-[#422006]',
-  rendah: 'bg-[#BBF7D0] text-[#052e16]'
-};
+
 const $ = id => document.getElementById(id);
-const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
-const pad = n => String(n).padStart(2, '0');
-const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-/* ===== Data: load / save ===== */
-const defaults = () => ({
-  theme: 'pagi', filter: 'all', energy: 100,
-  dur: { fokus: 25, istirahat: 5, panjang: 15 },
-  tasks: [], distractions: [],
-  stats: { day: today(), minutes: 0, sessions: 0 }
-});
-let state = defaults();
-let popId = null; // tanaman terbaru untuk animasi
-
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
+const defaults = { tasks: [], energy: 100, distractions: [], durations: { focus: 25, short: 5, long: 15 }, theme: "pagi", stats: { day: today(), minutes: 0, sessions: 0 } };
+let data = { ...defaults }, mode = "focus", remaining = 1500, total = 1500, endAt = 0, interval = null, filter = "all";
+const plants = ["🌱","🌿","🌷","🌻","🌼","🌳"];
+const clamp = n => Math.max(0, Math.min(100, n));
+function save() { try { localStorage.setItem("fokusIn", JSON.stringify(data)); } catch(e) { toast("Penyimpanan tidak tersedia."); } }
 function load() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(KEY));
-    if (raw && typeof raw === 'object') state = { ...defaults(), ...raw };
-  } catch (e) { /* abaikan data rusak */ }
-  checkDay();
+  try { const old = JSON.parse(localStorage.getItem("fokusIn")); if (old) data = { ...defaults, ...old, durations: { ...defaults.durations, ...old.durations }, stats: { ...defaults.stats, ...old.stats } }; } catch(e) {}
+  if (data.stats.day !== today()) data.stats = { day: today(), minutes: 0, sessions: 0 };
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { } }
-
-// Reset otomatis saat ganti hari
-function checkDay() {
-  const t = today();
-  if (state.stats.day === t) return false;
-  state.stats = { day: t, minutes: 0, sessions: 0 };
-  state.distractions = [];
-  save();
-  return true;
+function toast(message) { $("toast").textContent = message; $("toast").classList.remove("hidden"); setTimeout(() => $("toast").classList.add("hidden"), 2500); }
+function seconds() { return data.durations[mode] * 60; }
+function display() {
+  const m = Math.floor(remaining / 60), s = remaining % 60;
+  $("timerDisplay").textContent = `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  document.title = `${$("timerDisplay").textContent} — fokus.in`;
+  const percent = Math.floor((1 - remaining / total) * 100 / 10) * 10;
+  $("timerProgress").className = `h-full rounded-full bg-violet-500 w-[${percent}%]`;
 }
-
-/* ===== Turunan data ===== */
-const doneTasks = () => state.tasks.filter(t => t.done);
-const doneToday = () => state.tasks.filter(t => t.done && t.doneDay === today()).length;
-const wilted = () => state.distractions.length >= 5;
-
-/* ===== Notifikasi & bunyi ===== */
-let toastTimer;
-function toast(msg) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.classList.remove('opacity-0');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.add('opacity-0'), 3500);
+function stop() { clearInterval(interval); interval = null; endAt = 0; $("startBtn").textContent = "MULAI"; }
+function setMode(next) {
+  stop(); mode = next; total = seconds(); remaining = total;
+  document.querySelectorAll(".mode-btn").forEach(b => b.className = `mode-btn flex-1 rounded-xl p-3 font-bold ${b.dataset.mode === mode ? "bg-violet-600 text-white" : "text-white/60"}`);
+  $("timerHint").textContent = mode === "focus" ? `Fokus ${data.durations.focus} menit, lalu beri dirimu jeda.` : `Waktunya ${mode === "short" ? "istirahat sejenak" : "istirahat panjang"}.`;
+  display();
 }
-function beep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.25, 0.5].forEach(d => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0.15, ctx.currentTime + d);
-      o.start(ctx.currentTime + d); o.stop(ctx.currentTime + d + 0.15);
-    });
-  } catch (e) { }
+function start() {
+  if (interval) { stop(); return; }
+  endAt = Date.now() + remaining * 1000; $("startBtn").textContent = "JEDA";
+  interval = setInterval(() => {
+    remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000)); display();
+    if (!remaining) finish();
+  }, 250);
 }
-
-/* ===== Timer ===== */
-const timer = { mode: 'fokus', running: false, endAt: 0, left: 0 };
-const total = () => state.dur[timer.mode] * 60000;
-
-function setMode(m) { timer.mode = m; timer.running = false; timer.left = total(); renderTimer(); }
-function toggleTimer() {
-  if (timer.running) { timer.left = Math.max(0, timer.endAt - Date.now()); timer.running = false; }
-  else { timer.endAt = Date.now() + timer.left; timer.running = true; }
-  renderTimer();
+function finish() {
+  const doneMode = mode; stop(); remaining = 0; display();
+  if (doneMode === "focus") {
+    data.energy = clamp(data.energy - 15); data.stats.minutes += data.durations.focus; data.stats.sessions++;
+    toast("Sesi fokus selesai! Saatnya istirahat 🌿"); setMode("short");
+  } else {
+    data.energy = clamp(data.energy + (doneMode === "long" ? 30 : 20));
+    toast("Istirahat selesai. Siap lanjut?"); setMode("focus");
+  }
+  save(); render();
+  try { const a = new AudioContext(), o = a.createOscillator(); o.connect(a.destination); o.frequency.value = 660; o.start(); o.stop(a.currentTime + .3); o.onended = () => a.close(); } catch(e) {}
 }
-function resetTimer() { timer.running = false; timer.left = total(); renderTimer(); }
-
-function finishTimer() {
-  const m = timer.mode;
-  timer.running = false;
-  beep();
-  if (m === 'fokus') {
-    state.stats.minutes += state.dur.fokus;
-    state.stats.sessions++;
-    changeEnergy(-15);
-  } else changeEnergy(m === 'panjang' ? 30 : 20);
-  const next = m === 'fokus' ? (state.stats.sessions % 4 === 0 ? 'panjang' : 'istirahat') : 'fokus';
-  toast(`${LABEL[m]} selesai! Siap untuk ${LABEL[next]}.`);
-  timer.mode = next; timer.left = total();
-  save(); renderAll();
-}
-
-function tick() {
-  if (checkDay()) renderAll();
-  if (!timer.running) return;
-  const l = timer.endAt - Date.now();
-  if (l <= 0) return finishTimer();
-  timer.left = l;
-  renderTimer();
-}
-
-function renderTimer() {
-  const s = Math.ceil(timer.left / 1000);
-  const txt = `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
-  $('time').textContent = txt;
-  $('bar').style.width = `${100 - (timer.left / total()) * 100}%`;
-  $('btnStart').textContent = timer.running ? 'Jeda' : (timer.left < total() ? 'Lanjut' : 'Mulai');
-  document.title = timer.running ? `${txt} · ${LABEL[timer.mode]} — fokus.in` : 'fokus.in';
-  document.querySelectorAll('#tabs button').forEach(b => {
-    const on = b.dataset.mode === timer.mode;
-    b.setAttribute('aria-selected', on);
-    b.classList.toggle('btn-p', on);
-  });
-  $('timerHint').textContent = state.energy <= 30 && timer.mode === 'fokus'
-    ? '🔋 Energimu tipis. Isi dulu atau ambil istirahat, ya.' : '';
-}
-
-/* ===== Energi ===== */
-function changeEnergy(n) { state.energy = clamp(state.energy + n, 0, 100); }
-
-function renderEnergy() {
-  const e = state.energy;
-  const bar = $('energyBar');
-  bar.style.width = e + '%';
-  bar.style.background = e > 60 ? '#22c55e' : e > 30 ? '#eab308' : '#ef4444';
-  $('energyPct').textContent = e + '%';
-  $('battery').setAttribute('aria-label', `Energi ${e} persen`);
-  $('energyMsg').textContent = e > 60 ? 'Segar! Waktu yang pas buat tugas berat.'
-    : e > 30 ? 'Lumayan. Selingi dengan minum air atau peregangan.'
-    : 'Hampir habis. Istirahat dulu supaya tamanmu tetap bahagia.';
-}
-
-/* ===== Tugas ===== */
-function addTask(text, pri) {
-  text = text.trim().slice(0, 80);
-  if (!text) return;
-  state.tasks.unshift({ id: Date.now() + Math.random(), text, pri, done: false, doneDay: null, plant: '' });
-  save(); renderTasks();
+function addTask(text, priority) {
+  if (!text.trim()) return;
+  if (data.tasks.length >= 80) return toast("Maksimal 80 tugas.");
+  data.tasks.push({ id: Date.now() + Math.random(), text: text.trim().slice(0,80), priority, done: false, date: "" });
+  save(); render();
 }
 function toggleTask(id) {
-  const t = state.tasks.find(x => x.id === id);
-  if (!t) return;
-  t.done = !t.done;
-  if (t.done) {
-    t.doneDay = today();
-    t.plant = PLANTS[Math.floor(Math.random() * PLANTS.length)];
-    popId = t.id; changeEnergy(-5);
-  } else { t.doneDay = null; t.plant = ''; popId = null; changeEnergy(5); }
-  save(); renderAll();
+  const task = data.tasks.find(t => t.id == id); if (!task) return;
+  task.done = !task.done; task.date = task.done ? today() : "";
+  data.energy = clamp(data.energy + (task.done ? -5 : 5)); save(); render();
 }
-function deleteTask(id) {
-  const t = state.tasks.find(x => x.id === id);
-  if (t && t.done) changeEnergy(0);
-  state.tasks = state.tasks.filter(x => x.id !== id);
-  save(); renderAll();
-}
-
 function renderTasks() {
-  document.querySelectorAll('#filters button').forEach(b => {
-    const on = b.dataset.f === state.filter;
-    b.classList.toggle('btn-p', on); b.setAttribute('aria-pressed', on);
+  const list = $("taskList"); list.replaceChildren();
+  const tasks = data.tasks.filter(t => filter === "all" || (filter === "active" ? !t.done : t.done));
+  $("taskCount").textContent = `${data.tasks.filter(t => !t.done).length} aktif · ${data.tasks.filter(t => t.done).length} selesai`;
+  tasks.forEach(t => {
+    const card = document.createElement("div"); card.className = "flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3";
+    const check = document.createElement("input"); check.type = "checkbox"; check.checked = t.done; check.className = "h-4 w-4 accent-violet-500"; check.addEventListener("change", () => toggleTask(t.id));
+    const text = document.createElement("span"); text.textContent = t.text; text.className = `min-w-0 flex-1 break-words text-sm ${t.done ? "line-through text-white/40" : ""}`;
+    const del = document.createElement("button"); del.textContent = "×"; del.className = "px-2 text-xl text-white/50"; del.addEventListener("click", () => { data.tasks = data.tasks.filter(x => x.id !== t.id); save(); render(); });
+    card.append(check, text, del); list.append(card);
   });
-  const list = state.tasks.filter(t =>
-    state.filter === 'all' || (state.filter === 'aktif' ? !t.done : t.done));
-  if (!list.length) {
-    $('taskList').innerHTML = `<li class="sm:col-span-2 text-muted text-center py-6">${
-      state.tasks.length ? 'Tidak ada tugas di filter ini.' : 'Belum ada tugas. Tambah satu dulu yuk ✍️'}</li>`;
-    return;
-  }
-  $('taskList').innerHTML = list.map((t, i) => `
-    <li class="${NOTE[t.pri]} rounded-xl p-4 shadow-md flex flex-col gap-3 transition-transform hover:rotate-0"
-        style="transform:rotate(${i % 2 ? 1.2 : -1.5}deg)">
-      <p class="font-semibold break-words ${t.done ? 'line-through opacity-70' : ''}">${esc(t.text)}</p>
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-bold uppercase">${esc(t.pri)}</span>
-        <span class="flex gap-1">
-          <button data-act="toggle" data-id="${t.id}" class="btn !bg-white/70 !text-black !py-1">${t.done ? '↩ Batal' : '✔ Selesai'}</button>
-          <button data-act="del" data-id="${t.id}" aria-label="Hapus tugas" class="btn !bg-white/70 !text-black !py-1">🗑</button>
-        </span>
-      </div>
-    </li>`).join('');
+  if (!tasks.length) list.textContent = "Belum ada tugas di sini.";
 }
-
-/* ===== Distraksi ===== */
-function addDistraction(label) {
-  label = label.trim().slice(0, 40);
-  if (!label) return;
-  const d = new Date();
-  state.distractions.unshift({ id: Date.now() + Math.random(), label, time: `${pad(d.getHours())}:${pad(d.getMinutes())}` });
-  save(); renderAll();
-}
-function renderDistractions() {
-  const n = state.distractions.length;
-  $('distCount').textContent = n;
-  $('distTip').textContent = n === 0 ? '🎉 Hebat, belum ada gangguan hari ini!'
-    : n < 5 ? '👍 Masih terkendali, tetap semangat.'
-    : '✈️ Gangguan banyak. Coba nyalakan mode pesawat selama sesi fokus.';
-  $('distList').innerHTML = n ? state.distractions.map(d => `
-    <li class="flex items-center justify-between bg-bg rounded-lg px-3 py-1">
-      <span><span class="text-muted">${d.time}</span> · ${esc(d.label)}</span>
-      <button data-act="deld" data-id="${d.id}" aria-label="Hapus distraksi ${esc(d.label)}" class="btn !py-0 !px-2">✕</button>
-    </li>`).join('') : '<li class="text-muted">Belum ada catatan.</li>';
-}
-
-/* ===== Taman ===== */
-function renderGarden() {
-  const plants = doneTasks();
-  const w = wilted();
-  const shown = plants.slice(-30);
-  $('garden').className = 'flex flex-wrap gap-2 text-3xl min-h-[5rem] transition' + (w ? ' wilt' : '');
-  $('garden').innerHTML = shown.length ? shown.map(t =>
-    `<span class="${t.id === popId ? 'pop' : ''}" aria-hidden="true">${w ? '🥀' : t.plant}</span>`).join('')
-    : '<span class="text-sm text-muted">Taman masih kosong. Selesaikan tugas untuk menanam.</span>';
-  $('garden').setAttribute('aria-label', `${plants.length} tanaman`);
-  $('gardenMsg').textContent = w
-    ? '🥀 Tamanmu layu karena distraksi hari ini sudah 5 atau lebih. Hapus catatan distraksi untuk memulihkannya.'
-    : plants.length ? `${plants.length} tanaman tumbuh dari tugas yang kamu selesaikan.`
-    : 'Setiap tugas selesai menumbuhkan satu tanaman.';
-}
-
-/* ===== Statistik & sapaan ===== */
-function renderStats() {
-  $('stDone').textContent = doneToday();
-  $('stMin').textContent = state.stats.minutes;
-  $('stSes').textContent = state.stats.sessions;
-}
-function renderGreeting() {
-  const h = new Date().getHours();
-  const s = h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
-  $('greet').textContent = `${s}! Yuk fokus sebentar 🌿`;
-}
-
-function renderAll() {
-  renderTimer(); renderTasks(); renderEnergy();
-  renderDistractions(); renderGarden(); renderStats();
-}
-
-/* ===== Event handler ===== */
-function bind() {
-  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
-  $('btnStart').addEventListener('click', toggleTimer);
-  $('btnReset').addEventListener('click', resetTimer);
-
-  ['fokus', 'istirahat', 'panjang'].forEach(k => {
-    const inp = $('d-' + k);
-    inp.value = state.dur[k];
-    inp.addEventListener('change', () => {
-      state.dur[k] = clamp(parseInt(inp.value, 10) || state.dur[k], 1, 120);
-      inp.value = state.dur[k];
-      if (k === timer.mode && !timer.running) timer.left = total();
-      save(); renderTimer();
-    });
+function render() {
+  renderTasks();
+  $("energyValue").textContent = data.energy + "%";
+  $("energyMessage").textContent = data.energy > 60 ? "Energi cukup! Jaga ritmemu 🌱" : data.energy > 30 ? "Mulai melambat. Ambil jeda ya." : "Energi menipis. Kamu perlu istirahat ❤️";
+  const level = Math.floor(data.energy / 10) * 10;
+  $("energyBar").className = `h-3 rounded-full ${data.energy > 60 ? "bg-green-400" : data.energy > 30 ? "bg-yellow-400" : "bg-rose-400"} w-[${level}%]`;
+  $("distractionCount").textContent = data.distractions.length;
+  $("distractionTip").textContent = !data.distractions.length ? "Luar biasa! Fokusmu terjaga ✨" : data.distractions.length < 5 ? "Masih terkendali. Yuk kembali fokus." : "Coba aktifkan mode pesawat dan jauhkan ponsel.";
+  $("distractionTip").className = `mt-2 text-sm ${data.distractions.length >= 5 ? "text-amber-300" : "text-green-300"}`;
+  $("distractionList").replaceChildren();
+  data.distractions.slice().reverse().forEach(d => {
+    const row = document.createElement("div"); row.className = "flex justify-between rounded-lg bg-black/20 p-2 text-sm";
+    const name = document.createElement("span"); name.textContent = `${d.name} · ${d.time}`;
+    const del = document.createElement("button"); del.textContent = "Hapus"; del.addEventListener("click", () => { data.distractions = data.distractions.filter(x => x.id !== d.id); save(); render(); });
+    row.append(name, del); $("distractionList").append(row);
   });
-
-  $('taskForm').addEventListener('submit', e => {
-    e.preventDefault();
-    addTask($('taskText').value, $('taskPri').value);
-    $('taskText').value = '';
-  });
-  $('filters').addEventListener('click', e => {
-    const b = e.target.closest('[data-f]');
-    if (b) { state.filter = b.dataset.f; save(); renderTasks(); }
-  });
-  $('taskList').addEventListener('click', e => {
-    const b = e.target.closest('[data-act]'); if (!b) return;
-    const id = parseFloat(b.dataset.id);
-    b.dataset.act === 'toggle' ? toggleTask(id) : deleteTask(id);
-  });
-
-  document.querySelectorAll('[data-energy]').forEach(b => b.addEventListener('click', () => {
-    changeEnergy(parseInt(b.dataset.energy, 10));
-    toast(`${b.dataset.l}: energi sekarang ${state.energy}%`);
-    save(); renderEnergy(); renderTimer();
-  }));
-
-  document.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => addDistraction(b.dataset.d)));
-  $('distForm').addEventListener('submit', e => {
-    e.preventDefault(); addDistraction($('distText').value); $('distText').value = '';
-  });
-  $('distList').addEventListener('click', e => {
-    const b = e.target.closest('[data-act="deld"]'); if (!b) return;
-    const id = parseFloat(b.dataset.id);
-    state.distractions = state.distractions.filter(d => d.id !== id);
-    save(); renderAll();
-  });
-
-  $('theme').addEventListener('change', e => applyTheme(e.target.value));
+  const count = Math.min(data.tasks.filter(t => t.done).length, 30), wilted = data.distractions.length >= 5;
+  $("gardenMessage").textContent = wilted ? "Tamanmu layu. Kurangi distraksi untuk menyegarkannya." : count ? "Usahamu tumbuh satu per satu 🌱" : "Selesaikan tugas untuk menumbuhkan tanaman.";
+  $("gardenPlants").textContent = Array.from({ length: count }, (_,i) => wilted ? "🥀" : plants[i % plants.length]).join(" ");
+  $("statTasks").textContent = data.tasks.filter(t => t.done && t.date === today()).length;
+  $("statMinutes").textContent = data.stats.minutes; $("statSessions").textContent = data.stats.sessions;
+  const themes = { pagi: "from-slate-950 via-slate-900 to-violet-950", hujan: "from-slate-950 via-blue-950 to-slate-900", hutan: "from-green-950 via-slate-900 to-emerald-950", kafe: "from-stone-950 via-amber-950 to-stone-900" };
+  document.body.className = `min-h-screen bg-gradient-to-br ${themes[data.theme]} text-white font-sans`;
+  $("themeSelect").value = data.theme;
 }
-
-function applyTheme(t) {
-  state.theme = t;
-  document.documentElement.setAttribute('data-theme', t);
-  $('theme').value = t;
-  save();
+$("startBtn").addEventListener("click", start);
+$("resetBtn").addEventListener("click", () => { stop(); remaining = total; display(); });
+document.querySelectorAll(".mode-btn").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+$("durationBtn").addEventListener("click", () => $("durationPanel").classList.toggle("hidden"));
+$("saveDuration").addEventListener("click", () => {
+  const values = { focus: $("focusDuration").value, short: $("shortDuration").value, long: $("longDuration").value };
+  if (Object.values(values).some(v => !Number.isInteger(Number(v)) || v < 1 || v > 120)) return toast("Durasi harus 1–120 menit.");
+  Object.keys(values).forEach(k => data.durations[k] = Number(values[k]));
+  save(); setMode(mode); toast("Durasi diperbarui.");
+});
+$("taskForm").addEventListener("submit", e => { e.preventDefault(); addTask($("taskInput").value, $("priorityInput").value); $("taskInput").value = ""; });
+document.querySelectorAll(".filter-btn").forEach(b => b.addEventListener("click", () => { filter = b.dataset.filter; renderTasks(); }));
+document.querySelectorAll(".energy-btn").forEach(b => b.addEventListener("click", () => { data.energy = clamp(data.energy + Number(b.dataset.energy)); save(); render(); }));
+function addDistraction(name) {
+  data.distractions.push({ id: Date.now() + Math.random(), name, time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) }); save(); render(); toast("Distraksi dicatat. Yuk kembali fokus.");
 }
-
-/* ===== Mulai ===== */
-load();
-timer.left = total();
-bind();
-applyTheme(state.theme);
-renderGreeting();
-renderAll();
-setInterval(tick, 250);
+document.querySelectorAll(".distraction-btn").forEach(b => b.addEventListener("click", () => addDistraction(b.dataset.name)));
+$("distractionForm").addEventListener("submit", e => { e.preventDefault(); if ($("distractionInput").value.trim()) addDistraction($("distractionInput").value.trim()); $("distractionInput").value = ""; });
+$("themeSelect").addEventListener("change", e => { data.theme = e.target.value; save(); render(); });
+function init() {
+  load(); const h = new Date().getHours();
+  $("greeting").textContent = h < 11 ? "Selamat pagi!" : h < 15 ? "Selamat siang!" : h < 18 ? "Selamat sore!" : "Selamat malam!";
+  $("todayLabel").textContent = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
+  $("focusDuration").value = data.durations.focus; $("shortDuration").value = data.durations.short; $("longDuration").value = data.durations.long;
+  render(); setMode("focus");
+}
+init();
