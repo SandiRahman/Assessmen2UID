@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020617">
+  <title>Task Manager — fokus.in</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950 text-white antialiased">
+
+  <!-- Navigasi desktop -->
+  <aside class="desktop-sidebar hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-50 h-[min(680px,85vh)] w-[82px] flex-col items-center rounded-full border border-white/10 bg-[#111014]/95 backdrop-blur-2xl shadow-2xl shadow-black/50 p-3">
+    <a href="Home.html" title="fokus.in" aria-label="fokus.in, beranda" class="sidebar-logo mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-violet-600 text-xl font-black shadow-lg shadow-violet-600/30">f.</a>
+    <nav aria-label="Navigasi utama" class="sidebar-main-nav flex w-full flex-col items-center gap-4">
+      <a href="Home.html" title="Beranda" class="group relative flex h-12 w-12 items-center justify-center rounded-2xl text-2xl text-white/50 transition hover:bg-white/10 hover:text-white">
+        <span>⌂</span><span class="absolute left-16 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-xs group-hover:block">Beranda</span>
+      </a>
+      <a href="tasks.html" aria-current="page" title="Task Manager" class="group relative flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-2xl text-white shadow-lg shadow-violet-600/30" aria-label="Task Manager">
+        <span>☑</span><span class="absolute left-16 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-xs group-hover:block">Task Manager</span>
+      </a>
+      <a href="dashboard.html" title="Dashboard" class="group relative flex h-12 w-12 items-center justify-center rounded-2xl text-2xl text-white/50 transition hover:bg-white/10 hover:text-white">
+        <span>▦</span><span class="absolute left-16 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-xs group-hover:block">Dashboard</span>
+      </a>
+      <a href="Profile.html" title="Profil" class="group relative flex h-12 w-12 items-center justify-center rounded-2xl text-2xl text-white/50 transition hover:bg-white/10 hover:text-white">
+        <span>♙</span><span class="absolute left-16 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-xs group-hover:block">Profil</span>
+      </a>
+    </nav>
+    <div class="sidebar-divider my-6 h-px w-10 bg-white/10"></div>
+    <div class="sidebar-secondary flex flex-col items-center gap-4">
+      <button type="button" title="Pengaturan" aria-label="Pengaturan" class="group relative flex h-12 w-12 items-center justify-center rounded-2xl text-xl text-white/40 hover:bg-white/10 hover:text-white">
+        <span>⚙</span>
+        <span class="absolute left-16 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-xs group-hover:block">Pengaturan</span>
+      </button>
+      <button type="button" title="Tampilan" aria-label="Tampilan" class="group relative flex h-12 w-12 items-center justify-center rounded-2xl text-xl text-white/40 hover:bg-white/10 hover:text-white">
+        <span>◐</span>
+        <span class="absolute left-16 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-xs group-hover:block">Tampilan</span>
+      </button>
+    </div>
+    <div class="sidebar-footer mt-auto mb-3">
+      <div class="mb-5 h-px w-10 bg-white/10"></div>
+      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white/40">
+        <span class="text-xl">◎</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="relative mx-auto min-h-screen max-w-7xl px-5 pb-28 pt-7 sm:px-8 md:ml-28 md:px-10 md:pb-10">
+    <header class="mb-9 flex items-center justify-between">
+      <a href="Home.html" class="text-xl font-black tracking-tight md:hidden">fokus<span class="text-violet-400">.in</span></a>
+      <p class="hidden text-sm font-semibold tracking-[.18em] text-violet-300 md:block">RUANG KECIL UNTUK DIRIMU</p>
+      <a href="Home.html" class="ml-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-4 py-2.5 text-sm font-semibold text-white/75 transition hover:border-violet-400/40 hover:bg-violet-500/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+        <span aria-hidden="true">←</span> Kembali fokus
+      </a>
+    </header>
+
+    <section class="mb-8">
+      <p class="mb-2 text-sm font-semibold text-violet-300">SEDIKIT DEMI SEDIKIT, JADI</p>
+      <div class="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <h1 class="text-3xl font-black tracking-tight sm:text-4xl">Task Manager<span class="text-violet-400">.</span></h1>
+          <p class="mt-2 max-w-xl text-sm leading-6 text-white/55 sm:text-base">Pilih salah satu tugas aja dulu</p>
+        </div>
+        <p id="todayLabel" class="text-sm font-medium capitalize text-white/45"></p>
+      </div>
+    </section>
+
+    <!-- Ringkasan tugas -->
+    <section aria-label="Ringkasan tugas" class="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
+      <article class="rounded-2xl border border-white/[.08] bg-white/[.045] p-4 sm:rounded-3xl sm:p-5">
+        <p class="text-xs font-medium text-white/45 sm:text-sm">Belum selesai</p>
+        <p id="activeCount" class="mt-2 text-2xl font-bold tabular-nums sm:text-3xl">0</p>
+      </article>
+      <article class="rounded-2xl border border-white/[.08] bg-white/[.045] p-4 sm:rounded-3xl sm:p-5">
+        <p class="text-xs font-medium text-white/45 sm:text-sm">Selesai hari ini</p>
+        <p id="doneCount" class="mt-2 text-2xl font-bold tabular-nums sm:text-3xl">0</p>
+      </article>
+      <article class="rounded-2xl border border-white/[.08] bg-white/[.045] p-4 sm:rounded-3xl sm:p-5">
+        <p class="text-xs font-medium text-white/45 sm:text-sm">Energi</p>
+        <p class="mt-2 text-2xl font-bold tabular-nums sm:text-3xl"><span id="energyCount">100</span>%</p>
+      </article>
+    </section>
+
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <section class="min-w-0 overflow-hidden rounded-3xl border border-white/[.08] bg-[#191720]/90 shadow-2xl shadow-black/20">
+        <div class="border-b border-white/[.07] p-5 sm:p-7">
+          <div class="mb-5 flex items-baseline justify-between gap-3">
+            <h2 class="text-lg font-semibold sm:text-xl">Daftar tugas</h2>
+            <p id="taskCount" class="text-xs text-white/50 sm:text-sm">0 tugas aktif</p>
+          </div>
+          <form id="taskForm" class="space-y-3">
+            <label for="taskInput" class="sr-only">Tugas baru</label>
+            <div class="flex gap-2">
+              <input id="taskInput" name="task" type="text" maxlength="80" autocomplete="off" placeholder="Tulis tugas baru..." class="min-w-0 flex-1 rounded-md border border-white/15 bg-black/25 px-3 py-2.5 text-sm text-white placeholder:text-white/35 outline-none focus:border-violet-400" required>
+              <button type="submit" class="shrink-0 rounded-md bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">Tambah</button>
+            </div>
+            <div class="flex items-center justify-between gap-3 text-sm">
+              <label for="priorityInput" class="text-white/55">Prioritas</label>
+              <select id="priorityInput" class="rounded-md border border-white/15 bg-[#211f29] px-3 py-1.5 text-sm text-white outline-none focus:border-violet-400">
+                <option value="sedang">Sedang</option>
+                <option value="tinggi">Tinggi</option>
+                <option value="rendah">Rendah</option>
+              </select>
+            </div>
+            <p class="text-xs text-white/40">Maksimal 80 tugas.</p>
+          </form>
+        </div>
+
+        <div class="flex gap-1 overflow-x-auto border-b border-white/[.07] px-5 pt-3 sm:px-7" role="tablist" aria-label="Filter tugas">
+          <button type="button" class="filter-btn border-b-2 border-violet-400 px-3 py-2 text-sm font-semibold text-white" data-filter="all" role="tab" aria-selected="true">Semua</button>
+          <button type="button" class="filter-btn border-b-2 border-transparent px-3 py-2 text-sm font-semibold text-white/45 hover:text-white" data-filter="active" role="tab" aria-selected="false">Aktif</button>
+          <button type="button" class="filter-btn border-b-2 border-transparent px-3 py-2 text-sm font-semibold text-white/45 hover:text-white" data-filter="done" role="tab" aria-selected="false">Selesai</button>
+        </div>
+        <div id="taskList" class="space-y-3 p-5 sm:p-7" aria-live="polite"></div>
+      </section>
+
+      <aside class="space-y-4">
+        <section class="overflow-hidden rounded-3xl border border-violet-300/10 bg-gradient-to-br from-violet-500/15 to-fuchsia-500/[.06] p-5 sm:p-6">
+          <h2 class="text-lg font-semibold">Progres hari ini</h2>
+          <div class="mt-4 flex items-baseline justify-between text-sm">
+            <p class="text-white/55">Tugas selesai</p>
+            <p id="progressLabel" class="font-semibold">0 dari 0</p>
+          </div>
+          <div class="mt-2 h-2 overflow-hidden rounded bg-black/30" role="progressbar" aria-label="Progres tugas selesai" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="progressBar" class="h-full w-0 bg-violet-400 transition-all duration-300"></div>
+          </div>
+          <p id="progressMessage" class="mt-3 text-sm text-white/65">Tambahkan satu tugas untuk memulai.</p>
+        </section>
+
+        <section class="rounded-3xl border border-white/[.08] bg-white/[.035] p-5 sm:p-6">
+          <h2 class="font-semibold">Jaga ritmemu</h2>
+          <p class="mt-2 text-sm leading-6 text-white/50">Selesaikan satu tugas, lalu beri dirimu jeda. Energi akan menyesuaikan dengan progresmu.</p>
+          <a href="Home.html" class="mt-3 inline-block text-sm font-semibold text-violet-300 underline underline-offset-2 hover:text-violet-200">Buka timer Pomodoro</a>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Navigasi mobile -->
+  <nav aria-label="Navigasi utama" class="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-white/10 bg-[#111014]/95 px-3 py-2.5 text-xs backdrop-blur-xl md:hidden">
+    <a href="Home.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45"><span class="text-xl" aria-hidden="true">⌂</span>Home</a>
+    <a href="tasks.html" aria-current="page" class="flex min-w-[56px] flex-col items-center gap-1 py-1 font-semibold text-violet-300"><span class="text-xl" aria-hidden="true">☑</span>Tugas</a>
+    <a href="dashboard.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45"><span class="text-xl" aria-hidden="true">▦</span>Dashboard</a>
+    <a href="Profile.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45"><span class="text-xl" aria-hidden="true">♙</span>Profil</a>
+  </nav>
+
+  <div id="toast" class="pointer-events-none fixed bottom-20 left-1/2 z-30 hidden -translate-x-1/2 rounded-xl border border-white/10 bg-violet-600 px-5 py-3 text-sm font-semibold shadow-xl md:bottom-6" role="status" aria-live="polite"></div>
+  <script src="tasks.js"></script>
+</body>
+</html>
