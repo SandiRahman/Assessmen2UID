@@ -2,9 +2,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>fokus.in — Home</title>
-<script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body data-page="home" class="h-screen overflow-hidden bg-slate-950 text-white">
 <div id="backgroundLayer" class="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"></div>
@@ -17,11 +19,11 @@
 </a>
 
 <!-- SIDEBAR -->
-<aside class="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-50 h-[min(680px,85vh)] w-[82px] flex-col items-center rounded-full border border-white/10 bg-[#111014]/95 backdrop-blur-2xl shadow-2xl shadow-black/50 p-3">
+<aside class="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-50 h-[min(560px,82vh)] w-[82px] flex-col items-center rounded-full border border-white/10 bg-[#111014]/95 backdrop-blur-2xl shadow-2xl shadow-black/50 p-3">
 <nav class="flex flex-col items-center gap-4 w-full">
 <a href="Home.html" title="Home" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/30"><i data-lucide="house" class="h-6 w-6"></i></a>
 <a href="tasks.html" title="Tasks" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="list-checks" class="h-6 w-6"></i></a>
-<a href="dashboard.html" title="Dashboard" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="chart-no-axes-combined" class="h-6 w-6"></i></a>
+<a href="studynotes.html" title="Study Notes" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="notebook-pen" class="h-6 w-6"></i></a>
 <a href="Profile.html" title="Profile" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="user-round" class="h-6 w-6"></i></a>
 </nav>
 <div class="my-6 h-px w-10 bg-white/10"></div>
@@ -29,7 +31,10 @@
 <button title="Pengaturan" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="settings" class="h-5 w-5"></i></button>
 <button id="themeToggle" title="Tampilan" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="palette" class="h-5 w-5"></i></button>
 </div>
-<div class="mt-auto mb-3"><div class="h-px w-10 bg-white/10 mb-5"></div><div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white/40"><i data-lucide="circle-user-round" class="h-6 w-6"></i></div></div>
+<div class="mt-auto mb-3">
+<div class="h-px w-10 bg-white/10 mb-5"></div>
+<div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white/40"><i data-lucide="circle-user-round" class="h-6 w-6"></i></div>
+</div>
 </aside>
 
 <!-- BACKGROUND PANEL -->
@@ -114,9 +119,9 @@
 
 <!-- MOBILE NAVIGATION -->
 <nav class="md:hidden fixed bottom-0 left-0 z-50 w-full border-t border-white/10 bg-slate-950/95 backdrop-blur-xl px-3 py-3 flex justify-around">
-<a href="Home.html" class="flex flex-col items-center gap-1 text-violet-400 text-xs"><i data-lucide="house" class="h-6 w-6"></i>Home</a>
+<a href="Home.html" aria-current="page" class="flex flex-col items-center gap-1 text-violet-400 text-xs"><i data-lucide="house" class="h-6 w-6"></i>Home</a>
 <a href="tasks.html" class="flex flex-col items-center gap-1 text-white/50 text-xs"><i data-lucide="list-checks" class="h-6 w-6"></i>Tasks</a>
-<a href="dashboard.html" class="flex flex-col items-center gap-1 text-white/50 text-xs"><i data-lucide="chart-no-axes-combined" class="h-6 w-6"></i>Dashboard</a>
+<a href="study-notes.html" class="flex flex-col items-center gap-1 text-white/50 text-xs"><i data-lucide="notebook-pen" class="h-6 w-6"></i>Notes</a>
 <a href="Profile.html" class="flex flex-col items-center gap-1 text-white/50 text-xs"><i data-lucide="user-round" class="h-6 w-6"></i>Profile</a>
 </nav>
 </div>
@@ -125,16 +130,28 @@
 
 <script src="script.js"></script>
 <script>
-const themes = {forest:"assets/forest.jpg",night:"assets/night.jpg",sunny:"assets/sunny.jpg",rain:"assets/rain.jpg"};
-const layer = document.getElementById("backgroundLayer"), panel = document.getElementById("themePanel");
+const themes = {
+  forest: "assets/forest.jpg",
+  night: "assets/night.jpg",
+  sunny: "assets/sunny.jpg",
+  rain: "assets/rain.jpg"
+};
+
+const layer = document.getElementById("backgroundLayer");
+const panel = document.getElementById("themePanel");
+
 function setTheme(name) {
-if (!themes[name]) return;
-layer.style.backgroundImage = `linear-gradient(#0006,#0006),url("${themes[name]}")`;
-localStorage.setItem("fokusTheme",name);
+  if (!themes[name]) return;
+  layer.style.backgroundImage = `linear-gradient(#0006,#0006),url("${themes[name]}")`;
+  localStorage.setItem("fokusTheme", name);
 }
+
 document.getElementById("themeToggle").onclick = () => panel.classList.toggle("hidden");
 document.getElementById("closeTheme").onclick = () => panel.classList.add("hidden");
-document.querySelectorAll("[data-theme]").forEach(btn => btn.onclick = () => setTheme(btn.dataset.theme));
+document.querySelectorAll("[data-theme]").forEach(button => {
+  button.onclick = () => setTheme(button.dataset.theme);
+});
+
 setTheme(localStorage.getItem("fokusTheme") || "forest");
 lucide.createIcons();
 </script>

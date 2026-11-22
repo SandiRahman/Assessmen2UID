@@ -18,40 +18,21 @@
 </a>
 
 <!-- SIDEBAR -->
-<aside class="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-50 h-[min(490px,75vh)] w-[72px] flex-col items-center rounded-[28px] border border-white/10 bg-[#111014]/95 backdrop-blur-2xl shadow-2xl p-2.5">
-
-<nav class="flex flex-col items-center gap-2.5 w-full">
-<a href="Home.html" title="Home"
-class="flex h-11 w-11 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-105">
-<i data-lucide="house" class="w-5 h-5"></i></a>
-
-<a href="tasks.html" title="Tasks"
-class="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/30">
-<i data-lucide="list-checks" class="w-5 h-5"></i></a>
-
-<a href="dashboard.html" title="Dashboard"
-class="flex h-11 w-11 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-105">
-<i data-lucide="chart-no-axes-combined" class="w-5 h-5"></i></a>
-
-<a href="Profile.html" title="Profile"
-class="flex h-11 w-11 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-105">
-<i data-lucide="user-round" class="w-5 h-5"></i></a>
+<aside class="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-50 h-[min(560px,82vh)] w-[82px] flex-col items-center rounded-full border border-white/10 bg-[#111014]/95 backdrop-blur-2xl shadow-2xl shadow-black/50 p-3">
+<nav class="flex flex-col items-center gap-4 w-full">
+<a href="Home.html" title="Home" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="house" class="h-6 w-6"></i></a>
+<a href="tasks.html" title="Tasks" aria-current="page" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/30"><i data-lucide="list-checks" class="h-6 w-6"></i></a>
+<a href="studynotes.html" title="Study Notes" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="notebook-pen" class="h-6 w-6"></i></a>
+<a href="Profile.html" title="Profile" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="user-round" class="h-6 w-6"></i></a>
 </nav>
-
-<div class="my-4 h-px w-8 bg-white/10"></div>
-
-<div class="flex flex-col items-center gap-2.5">
-<button title="Pengaturan" class="flex h-10 w-10 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-105">
-<i data-lucide="settings" class="h-5 w-5"></i></button>
-<button title="Tampilan" class="flex h-10 w-10 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-105">
-<i data-lucide="palette" class="h-5 w-5"></i></button>
+<div class="my-6 h-px w-10 bg-white/10"></div>
+<div class="flex flex-col items-center gap-4">
+<button title="Pengaturan" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="settings" class="h-5 w-5"></i></button>
+<button title="Tampilan" class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/40 transition-all hover:bg-white/10 hover:text-white hover:scale-110"><i data-lucide="palette" class="h-5 w-5"></i></button>
 </div>
-
-<div class="mt-auto pt-4">
-<div class="mb-3 h-px w-8 bg-white/10"></div>
-<div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-white/40">
-<i data-lucide="circle-user-round" class="h-5 w-5"></i>
-</div>
+<div class="mt-auto mb-3">
+<div class="h-px w-10 bg-white/10 mb-5"></div>
+<div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white/40"><i data-lucide="circle-user-round" class="h-6 w-6"></i></div>
 </div>
 </aside>
 
@@ -111,7 +92,9 @@ class="flex h-11 w-11 items-center justify-center rounded-2xl text-white/40 tran
 <div class="flex items-center justify-between gap-3 text-base">
 <label for="priorityInput" class="text-white/55">Prioritas</label>
 <select id="priorityInput" class="rounded-xl border border-white/15 bg-[#211f29] px-4 py-3 text-sm text-white outline-none transition-all hover:border-violet-400/50 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
-<option value="sedang">Sedang</option><option value="tinggi">Tinggi</option><option value="rendah">Rendah</option>
+<option value="sedang">Sedang</option>
+<option value="tinggi">Tinggi</option>
+<option value="rendah">Rendah</option>
 </select>
 </div>
 <p class="text-sm text-white/40">Maksimal 80 tugas.</p>
@@ -154,7 +137,7 @@ class="flex h-11 w-11 items-center justify-center rounded-2xl text-white/40 tran
 <nav aria-label="Navigasi utama" class="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-white/10 bg-[#111014]/95 px-3 py-2.5 text-xs backdrop-blur-xl md:hidden">
 <a href="Home.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45 transition-all hover:text-white"><i data-lucide="house" class="h-5 w-5"></i>Home</a>
 <a href="tasks.html" aria-current="page" class="flex min-w-[56px] flex-col items-center gap-1 py-1 font-semibold text-violet-300"><i data-lucide="list-checks" class="h-5 w-5"></i>Tugas</a>
-<a href="dashboard.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45 transition-all hover:text-white"><i data-lucide="chart-no-axes-combined" class="h-5 w-5"></i>Dashboard</a>
+<a href="study-notes.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45 transition-all hover:text-white"><i data-lucide="notebook-pen" class="h-5 w-5"></i>Notes</a>
 <a href="Profile.html" class="flex min-w-[56px] flex-col items-center gap-1 py-1 text-white/45 transition-all hover:text-white"><i data-lucide="user-round" class="h-5 w-5"></i>Profil</a>
 </nav>
 
